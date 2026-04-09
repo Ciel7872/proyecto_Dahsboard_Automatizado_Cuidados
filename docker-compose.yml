@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  monitor-cuidados:
+    build: .
+    container_name: monitor-cepal
+    ports:
+      - "8501:8501"
+    volumes:
+      # Sincroniza tu carpeta local con la del contenedor (Hot-reloading)
+      - .:/app
+    environment:
+      # Evita que Python guarde en buffer los prints, ideal para leer logs de errores
+      - PYTHONUNBUFFERED=1
