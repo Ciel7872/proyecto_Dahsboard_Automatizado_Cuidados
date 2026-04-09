@@ -1,55 +1,62 @@
 import requests
 import pandas as pd
-from datetime import datetime
+import streamlit as st
 
-# URL base oficial de la API de CEPALSTAT
-CEPAL_BASE_URL = "https://api-cepalstat.cepal.org/cepalstat/api/v1"
+class CepalMonitor:
+    def __init__(self):
+        self.base_url = "https://api-cepalstat.cepal.org/cepalstat/api/v1"
+        self.arg_id = 32  # Argentina
 
-# Diccionario de Indicadores clave para el Bloque 3 (Deben verificarse en el catálogo de CEPALSTAT)
-INDICADORES_CUIDADO = {
-    "feminizacion_pobreza": 3192,  # ID de ejemplo: Índice de feminidad de la pobreza
-    "participacion_laboral_mujeres": 3285, # ID de ejemplo: Tasa de participación económica
-    "desempleo_mujeres": 3286, # ID de ejemplo: Tasa de desocupación
-    "nini_mujeres": 3290 # ID de ejemplo: Jóvenes que no estudian ni trabajan
+    @st.cache_data
+    def fetch_benchmark(self, _self, indicator_id):
+        endpoint = f"{self.base_url}/indicator/{indicator_id}/data"
+        params = {"lang": "es", "format": "json", "members": self.arg_id}
+        try:
+            r = requests.get(endpoint, params=params)
+            r.raise_for_status()
+            return pd.DataFrame(r.json()['body'])
+        except:
+            return None
+
+# --- MAPEO REAL ---
+KPI_MAP = {
+    "Uso del Tiempo (ODS 5.4.1)": 3201,
+    "Feminización de la Pobreza": 3330,
+    "Participación Laboral (%)": 2470,
+    "Fuera del Mercado por Cuidados": 5531, # ¡Esta es clave!
+    "Jóvenes NINI (15-24 años)": 3469,
+    "Dependencia Demográfica": 4792,
+    "Hogares Jefatura Femenina": 2465,
+    "Asistencia Escolar (6-11 años)": 4977
 }
 
-def obtener_dato_cepal(indicator_id, iso_country="ARG"):
-    """
-    Consulta la API de CEPALSTAT para un indicador específico y un país.
-    Devuelve el último valor disponible.
-    """
-    # Endpoint para obtener los datos del indicador
-    url = f"{CEPAL_BASE_URL}/indicator/{indicator_id}/data"
+def main():
+    st.set_page_config(page_title="Monitor CEPAL Benchmark", layout="wide")
+    st.title("📊 Benchmark Nacional (CEPALSTAT)")
     
-    try:
-        response = requests.get(url)
-        response.raise_for_status() # Lanza error si el status no es 200 OK
-        data = response.json()
-        
-        # Filtramos los datos para el país solicitado (ej. "ARG" para Argentina)
-        datos_pais = [item for item in data['body']['data'] if item.get('dim_190') == iso_country]
-        
-        if not datos_pais:
-            return {"error": "No hay datos para este país"}
-        
-        # Ordenamos por año para agarrar el dato más reciente
-        datos_pais.sort(key=lambda x: str(x.get('dim_time', '0')), reverse=True)
-        ultimo_dato = datos_pais[0]
-        
-        return {
-            "indicador_id": indicator_id,
-            "pais": iso_country,
-            "anio": ultimo_dato.get('dim_time'),
-            "valor": ultimo_dato.get('value'),
-            "unidad": data['body']['metadata'].get('unit_of_measure', 'N/A')
-        }
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Error al conectar con CEPAL: {e}")
-        return None
+    monitor = CepalMonitor()
+    
+    with st.sidebar:
+        st.header("Filtros de API")
+        seleccion = st.selectbox("Seleccioná métrica de comparación:", list(KPI_MAP.keys()))
+        btn = st.button("Consultar API")
 
-# --- Pruebas rápidas (Esto luego se borra o se mueve a notebooks/) ---
+    if btn:
+        id_api = KPI_MAP[seleccion]
+        df = monitor.fetch_benchmark(monitor, id_api)
+        
+        if df is not None:
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                st.metric("Indicador Seleccionado", seleccion)
+                st.write(f"ID Técnico: {id_api}")
+            with col2:
+                st.subheader("Serie Histórica Argentina")
+                st.dataframe(df)
+                # Si el DF tiene columnas 'años' y 'valor', podés graficar:
+                # st.line_chart(df.set_index('años')['valor'])
+        else:
+            st.error("No hay datos disponibles para Argentina en este indicador.")
+
 if __name__ == "__main__":
-    print("Testeando conexión a CEPAL para Feminización de la Pobreza...")
-    resultado = obtener_dato_cepal(INDICADORES_CUIDADO["feminizacion_pobreza"])
-    print(resultado)
+    main()

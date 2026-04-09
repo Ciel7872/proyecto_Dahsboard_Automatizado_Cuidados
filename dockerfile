@@ -16,5 +16,5 @@ COPY . .
 # Exponemos el puerto estándar de Streamlit
 EXPOSE 8501
 
-# Comando para ejecutar la app
-CMD ["streamlit", "run", "app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Comando para ejecutar la app  -->   app/main.py
+CMD ["streamlit", "run", "src/apis/api_cepal.py", "--server.port=8501", "--server.address=0.0.0.0"]

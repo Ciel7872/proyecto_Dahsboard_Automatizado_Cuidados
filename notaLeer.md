@@ -34,3 +34,9 @@ git fetch --all
 ### Para crear una rama nueva desde desarrollo:
 git checkout desarrollo
 git checkout -b >su nombre o feature_api_...>
+
+
+### comando streamlist
+docker exec -it monitor-cepal python src/apis/api_cepal.py
+
+En http://localhost:8501/ 
