@@ -111,7 +111,7 @@ with b_left:
 with b_right:
     st.markdown("### Acciones de Reporte")
     st.button("📥 Exportar Datos (CSV)")
-    st.button("📄 Generar Reporte PDF")
+    st.button("📄 Generar Reporte PDFf")
 
 # FOOTER
 st.markdown("---")
