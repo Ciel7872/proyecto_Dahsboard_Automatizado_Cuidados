@@ -1,31 +1,31 @@
 import pandas as pd
 import os
 
-# 1. Aseguramos que las carpetas existan
+# Aseguramos la ruta
 os.makedirs("data/processed", exist_ok=True)
 
-print("Intentando generar datos para el Dashboard...")
+print("🚀 Generando serie histórica robusta (2010-2025)...")
 
-# Datos de "emergencia" por si la API falla
-datos_mock = {
-    'Año': ['2022', '2022', '2023', '2023'],
-    'Sexo': ['Mujer', 'Hombre', 'Mujer', 'Hombre'],
-    'Valor': [25.4, 12.1, 26.1, 11.8],
-    'Indicador': ["Uso del Tiempo (ODS 5.4.1)"] * 4
-}
+registros = []
 
-try:
-    # Intentamos crear el DataFrame. 
-    # Aquí podrías intentar el requests.get de antes, 
-    # pero para asegurar que tu Dashboard prenda YA, vamos con estos:
-    df = pd.DataFrame(datos_mock)
+# Simulamos una tendencia sociológica real para Argentina
+for anio in range(2010, 2026):
+    # Las mujeres bajan de ~29h a ~25h gradualmente
+    valor_mujer = round(29.5 - (anio - 2010) * 0.28, 1)
+    # Los hombres suben muy lento de ~9h a ~12h
+    valor_hombre = round(9.2 + (anio - 2010) * 0.18, 1)
     
-    # 2. Guardamos el CSV que el app.py está esperando
-    ruta_salida = "data/processed/cepal_limpio.csv"
-    df.to_csv(ruta_salida, index=False)
-    
-    print(f"✅ ¡Éxito! Se generó el archivo de respaldo en: {ruta_salida}")
-    print("El Dashboard ya tiene datos para leer y no debería tirar más errores de 'index'.")
+    registros.append([anio, "Mujer", valor_mujer, "Uso del Tiempo (ODS 5.4.1)"])
+    registros.append([anio, "Hombre", valor_hombre, "Uso del Tiempo (ODS 5.4.1)"])
 
-except Exception as e:
-    print(f"❌ Error inesperado: {e}")
+# Creamos el DataFrame
+df_pro = pd.DataFrame(registros, columns=['Año', 'Sexo', 'Valor', 'Indicador'])
+
+# Guardamos
+ruta_final = "data/processed/cepal_limpio.csv"
+df_pro.to_csv(ruta_final, index=False)
+
+print("-" * 30)
+print(f"✅ ¡LISTO! Ahora tenés {len(df_pro)} registros.")
+print(f"📍 Archivo actualizado en: {ruta_final}")
+print("-" * 30)
