@@ -1,0 +1,55 @@
+# 📊 Monitor Estratégico ODS 5.4.1 - Datatón 2026
+
+Este monitor es una iniciativa desarrollada en el marco del **Datatón 2026** para el análisis y visibilización de datos críticos sobre el **Objetivo de Desarrollo Sostenible 5.4.1** (Trabajo de cuidado y doméstico no remunerado). 
+
+El proyecto integra capacidades de ingeniería de datos y diseño UI/UX avanzado para transformar métricas complejas en herramientas de decisión estratégica, utilizando una estética **Glassmorphism** en modo oscuro, optimizada para el análisis de alto rendimiento.
+
+---
+
+## 🚀 Características Principales
+
+* **Diagnóstico Estratégico:** Análisis histórico y visualización geoespacial detallada de la región de Córdoba.
+* **Simulador de Impacto:** Modelado predictivo para evaluar políticas de inversión pública y subsidios en la redistribución del tiempo.
+* **Arquitectura Modular:** Estructura desacoplada en módulos para permitir la colaboración multitecnológica y la escalabilidad del código.
+* **Exportación Profesional:** Generación de reportes ejecutivos y datasets procesados listos para auditoría.
+
+---
+
+## 🛠️ Tecnologías Utilizadas
+
+* **Core:** Python 3.13+ & Streamlit Framework.
+* **Visualización:** Plotly (Express & Graph Objects) para gráficos dinámicos y mapas de calor.
+* **Data Pipeline:** Pandas y Numpy para el procesamiento de series temporales.
+* **Entorno:** Configurado para despliegue en sistemas Linux (Debian/Ubuntu) mediante entornos virtuales.
+
+---
+
+## 🔧 Instalación y Ejecución Rápida
+
+1.  **Preparar el entorno:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+
+2.  **Instalar dependencias:**
+    ```bash
+    pip install streamlit pandas plotly numpy
+    ```
+
+3.  **Lanzar el Monitor:**
+    ```bash
+    streamlit run main.py
+    ```
+
+---
+
+## 📂 Estructura del Repositorio
+
+```text
+.
+├── main.py                  # Orquestador central y control de navegación
+├── dashboard_diagnostico.py  # Módulo de diagnóstico y análisis histórico
+├── dashboard_simulador.py    # Módulo de simulación de escenarios e impacto
+├── data/                    # Repositorio de datos procesados
+└── README.md                # Documentación técnica
