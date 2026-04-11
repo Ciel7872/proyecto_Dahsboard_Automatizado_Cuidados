@@ -26,22 +26,12 @@ El proyecto integra capacidades de ingeniería de datos y diseño UI/UX avanzado
 
 ## 🔧 Instalación y Ejecución Rápida
 
-1.  **Preparar el entorno:**
+1.  **Lanzar el Monitor:**
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate
+    docker-compose up --build  
     ```
-
-2.  **Instalar dependencias:**
-    ```bash
-    pip install streamlit pandas plotly numpy
-    ```
-
-3.  **Lanzar el Monitor:**
-    ```bash
-    streamlit run main.py
-    ```
-
+### Abrir en:
+    http://localhost:8501/ 
 ---
 
 ## 📂 Estructura del Repositorio

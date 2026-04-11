@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8501
 
 # Comando para ejecutar la app  -->   app/main.py
-CMD ["streamlit", "run", "src/apis/api_cepal.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "src/apis/raw/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
