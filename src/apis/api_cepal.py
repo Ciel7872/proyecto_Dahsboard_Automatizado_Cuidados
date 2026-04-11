@@ -1,55 +1,91 @@
 import requests
 import pandas as pd
-from datetime import datetime
+import streamlit as st
 
-# URL base oficial de la API de CEPALSTAT
-CEPAL_BASE_URL = "https://api-cepalstat.cepal.org/cepalstat/api/v1"
+# --- DICCIONARIOS DE TRADUCCIÓN ---
+# Usamos strings ("1") porque las APIs suelen mandar los números como texto
+MAPEO_SEXO = {"1": "Hombre", "2": "Mujer", "3": "Ambos sexos"}
+MAPEO_ZONA = {"1": "Nacional", "2": "Urbana", "3": "Rural"}
 
-# Diccionario de Indicadores clave para el Bloque 3 (Deben verificarse en el catálogo de CEPALSTAT)
-INDICADORES_CUIDADO = {
-    "feminizacion_pobreza": 3192,  # ID de ejemplo: Índice de feminidad de la pobreza
-    "participacion_laboral_mujeres": 3285, # ID de ejemplo: Tasa de participación económica
-    "desempleo_mujeres": 3286, # ID de ejemplo: Tasa de desocupación
-    "nini_mujeres": 3290 # ID de ejemplo: Jóvenes que no estudian ni trabajan
+class CepalMonitor:
+    def __init__(self):
+        self.base_url = "https://api-cepalstat.cepal.org/cepalstat/api/v1"
+        self.arg_id = 32  # Argentina
+
+    @st.cache_data 
+    def fetch_benchmark(_self, indicator_id):
+        endpoint = f"{_self.base_url}/indicator/{indicator_id}/data"
+        params = {"lang": "es", "format": "json", "members": _self.arg_id}
+        try:
+            r = requests.get(endpoint, params=params)
+            r.raise_for_status()
+            
+            datos_lista = r.json()['body']['data']
+            df = pd.json_normalize(datos_lista)
+            
+            # --- MAGIA DE DATA ANALYST (Traducción y Limpieza) ---
+            # 1. Traducimos los códigos numéricos a palabras
+            if 'dim_228' in df.columns:
+                df['Sexo'] = df['dim_228'].astype(str).map(MAPEO_SEXO).fillna(df['dim_228'])
+            
+            if 'dim_229' in df.columns:
+                df['Zona'] = df['dim_229'].astype(str).map(MAPEO_ZONA).fillna(df['dim_229'])
+
+            # 2. Renombramos la columna del tiempo
+            if 'dim_time' in df.columns:
+                df['Año'] = df['dim_time']
+                
+            # 3. Nos quedamos solo con las columnas limpias
+            columnas_finales = [col for col in ['Año', 'Sexo', 'Zona', 'value'] if col in df.columns]
+            df = df[columnas_finales]
+            
+            # 4. Le ponemos un nombre más claro al valor final
+            df = df.rename(columns={'value': 'Horas / Porcentaje'})
+            # -----------------------------------------------------
+            
+            return df
+        except Exception as e:
+            st.error(f"Error al procesar los datos: {e}")
+            return None
+
+# --- MAPEO REAL ---
+KPI_MAP = {
+    "Uso del Tiempo (ODS 5.4.1)": 3201,
+    "Feminización de la Pobreza": 3330,
+    "Participación Laboral (%)": 2470,
+    "Fuera del Mercado por Cuidados": 5531,
+    "Jóvenes NINI (15-24 años)": 3469,
+    "Dependencia Demográfica": 4792,
+    "Hogares Jefatura Femenina": 2465,
+    "Asistencia Escolar (6-11 años)": 4977
 }
 
-def obtener_dato_cepal(indicator_id, iso_country="ARG"):
-    """
-    Consulta la API de CEPALSTAT para un indicador específico y un país.
-    Devuelve el último valor disponible.
-    """
-    # Endpoint para obtener los datos del indicador
-    url = f"{CEPAL_BASE_URL}/indicator/{indicator_id}/data"
+def main():
+    st.set_page_config(page_title="Monitor CEPAL", layout="wide")
+    st.title("📊 Benchmark Nacional (CEPALSTAT)")
     
-    try:
-        response = requests.get(url)
-        response.raise_for_status() # Lanza error si el status no es 200 OK
-        data = response.json()
-        
-        # Filtramos los datos para el país solicitado (ej. "ARG" para Argentina)
-        datos_pais = [item for item in data['body']['data'] if item.get('dim_190') == iso_country]
-        
-        if not datos_pais:
-            return {"error": "No hay datos para este país"}
-        
-        # Ordenamos por año para agarrar el dato más reciente
-        datos_pais.sort(key=lambda x: str(x.get('dim_time', '0')), reverse=True)
-        ultimo_dato = datos_pais[0]
-        
-        return {
-            "indicador_id": indicator_id,
-            "pais": iso_country,
-            "anio": ultimo_dato.get('dim_time'),
-            "valor": ultimo_dato.get('value'),
-            "unidad": data['body']['metadata'].get('unit_of_measure', 'N/A')
-        }
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Error al conectar con CEPAL: {e}")
-        return None
+    monitor = CepalMonitor()
+    
+    with st.sidebar:
+        st.header("Filtros de API")
+        seleccion = st.selectbox("Seleccioná métrica de comparación:", list(KPI_MAP.keys()))
+        btn = st.button("Consultar API")
 
-# --- Pruebas rápidas (Esto luego se borra o se mueve a notebooks/) ---
+    if btn:
+        id_api = KPI_MAP[seleccion]
+        df = monitor.fetch_benchmark(id_api) 
+        
+        if df is not None and not df.empty:
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                st.metric("Indicador Seleccionado", seleccion)
+                st.write(f"ID Técnico: {id_api}")
+            with col2:
+                st.subheader("Serie Histórica Argentina")
+                # Mostramos la tabla ocupando todo el ancho disponible
+                st.dataframe(df, use_container_width=True) 
+        else:
+            st.error("No hay datos disponibles para Argentina en este indicador.")
+
 if __name__ == "__main__":
-    print("Testeando conexión a CEPAL para Feminización de la Pobreza...")
-    resultado = obtener_dato_cepal(INDICADORES_CUIDADO["feminizacion_pobreza"])
-    print(resultado)
+    main()
